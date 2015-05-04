@@ -142,6 +142,7 @@ class KvmXml(object):
 
     ## set default path disk
     def set_disk(self):
+        self.disks = []
         _disks = self.doc.xpath("//domain/devices/disk")
         _disk = None
         for disk in _disks:
@@ -166,6 +167,7 @@ class KvmXml(object):
             if __disk is not None:
                 __disk.set('file', diskpath)
                 self.disk = diskpath
+                self.disks.append(diskpath)
 
     ## set default path cdrom
     def set_cdrom(self):

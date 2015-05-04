@@ -1,0 +1,25 @@
+#!/usr/bin/env python
+#coding: utf-8
+#author leidong
+
+import os
+import sys
+
+
+topdir = os.path.normpath(os.path.join(os.path.abspath(sys.argv[0]),
+                                   os.pardir,
+                                   os.pardir))
+
+#print os.path.abspath(sys.argv[0])
+#print topdir
+
+if os.path.exists(os.path.join(topdir, "consolevm", "__init__.py")):
+        sys.path.insert(0, topdir)
+
+
+from consolevm.create_vm import main
+
+if __name__ == "__main__":
+    sys.exit(main())
+
+
