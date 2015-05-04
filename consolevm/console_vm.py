@@ -8,6 +8,12 @@
 from vm import CreateVm
 from xml import GetXml
 
+from config import create_vm_args
+
+__all__ = ["delete_vm" , "stop_vm" , "reboot_vm" , "start_vm" , "get_disk" , "get_mac"]
+
+
+## delete vm
 def delete_vm(vmname=None):
     cv = CreateVm(vmname)
     gx = GetXml(cv.get_xmlstring)
@@ -41,6 +47,7 @@ def get_disk(vmname=None):
     return cv.get_disk(gx)
 
 if __name__ == "__main__":
+    create_vm_args("console_vm", "console vm")
     print get_mac("gitlab")
     print get_mac("ganglia")
     print get_disk("gitlab")
