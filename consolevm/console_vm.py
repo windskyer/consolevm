@@ -10,7 +10,8 @@ from xml import GetXml
 
 from config import create_vm_args
 
-__all__ = ["delete_vm" , "stop_vm" , "reboot_vm" , "start_vm" , "get_disk" , "get_mac"]
+__all__ = ["delete_vm" , "stop_vm" , "reboot_vm" , "start_vm" , "get_disk" , "get_mac", "save_vm"]
+
 
 
 ## delete vm
@@ -31,9 +32,14 @@ def reboot_vm(vmname=None):
     cv.reboot
 
 ## start vm 
-def start_vm(vmname=None):
+def start_vm(vmname=None,savedir='/var/lib/libvirt/qemu/save'):
     cv = CreateVm(vmname)
-    cv.start
+    cv.start(savedir)
+
+## save vm to savedir
+def save_vm(vmname=None, savedir='/var/lib/libvirt/qemu/save'):
+    cv = CreateVm(vmname)
+    cv.save(savedir)
 
 def get_mac(vmname=None):
     cv = CreateVm(vmname)
@@ -47,7 +53,9 @@ def get_disk(vmname=None):
     return cv.get_disk(gx)
 
 if __name__ == "__main__":
-    create_vm_args("console_vm", "console vm")
-    print get_mac("gitlab")
-    print get_mac("ganglia")
-    print get_disk("gitlab")
+    #create_vm_args("console_vm", "console vm")
+    #print get_mac("gitlab")
+    #print get_mac("ganglia")
+    #print get_disk("gitlab")
+    start_vm("github")
+    #save_vm("github")

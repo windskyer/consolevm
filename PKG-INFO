@@ -1,0 +1,27 @@
+Metadata-Version: 1.1
+Name: consolevm
+Version: 2015.5.1
+Summary: 'Cloud computing fabric controller extension'
+Home-page: 'https://github.com/windskyer/consolevm'
+Author: 'flftuu '
+Author-email: 'flftuu@teamsun.com.cn'
+License: 'LGPL'
+Description: # consolevm
+        console libvirt vm 
+        
+        # consolevm url
+        https://github.com/windskyer/consolevm
+        
+        
+Platform: ''
+Classifier: Development Status :: 4 - Beta
+Classifier: License :: OSI Approved :: GNU Library or Lesser General Public License (LGPL)
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 2
+Classifier: Programming Language :: Python :: 3
+Classifier: Operating System :: MacOS :: MacOS X
+Classifier: Operating System :: POSIX
+Classifier: Operating System :: Microsoft :: Windows
+Classifier: Topic :: Internet
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Intended Audience :: Developers

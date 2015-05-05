@@ -66,7 +66,11 @@ class CreateVm(object):
     def _fullname(self):
         fullname = [self.shortname]
         pattern = re.compile("(\w*)\.(\w*)\.(\w*)")
-        res = pattern.search(socket.gethostname()).groups()
+        try:
+            res = pattern.search(socket.gethostname()).groups()
+        except AttributeError:
+            res = ['fedora', 'flftuu', 'com']
+
         domain = ".".join(res[1:]).split('.')
         fullname.extend(domain)
         return str(".".join(fullname))
@@ -84,9 +88,15 @@ class CreateVm(object):
         self._stop
         self.virtDomain.undefineFlags()
 
+
     @property
     def _delete(self):
         self._undefine
+
+    @property
+    def _save(self):
+        self._virDomain
+        self.virtDomain.save(self.savefile)
 
     @property
     def _define(self):
@@ -148,9 +158,22 @@ class CreateVm(object):
         return self.virtDomain.is_Active()
 
     @property
-    def start(self):
+    def _runsaveimg(self):
+        if not self.virtDomain.isActive():
+            print "leidong"
+            self.virConn.saveImageDefineXML(self.savefile, self.get_xmlstring, libvirt.VIR_DOMAIN_SAVE_RUNNING)
+            self._run
+        else:
+            self._stop
+            self.virConn.saveImageDefineXML(self.savefile, self.get_xmlstring, libvirt.VIR_DOMAIN_SAVE_RUNNING)
+
+    def start(self, savedir):
         self._virDomain
-        self._run
+        self.is_save = self.is_save(savedir)
+        if self.is_save:
+            self._runsaveimg
+        else:
+            self._run
 
     @property
     def stop(self):
@@ -161,6 +184,29 @@ class CreateVm(object):
     def reboot(self):
         self._virDomain
         self._reboot
+
+    def save(self,savedir):
+
+        if savedir is None or not os.path.exists(savedir):
+            raise CreateError(" not found  %s dir" % savedir)
+
+        self.savefile = os.path.join(savedir ,  self.fullname + ".save")
+
+        if os.path.exists(self.savefile):
+            raise CreateError("%s save file is exists" % self.savefile)
+
+        self._save
+
+    def is_save(self, savedir):
+        if savedir is None or not os.path.exists(savedir):
+            raise CreateError(" not found  %s dir" % savedir)
+
+        self.savefile = os.path.join(savedir ,  self.fullname + ".save")
+
+        if os.path.exists(self.savefile):
+            return True
+        else:
+            return False
 
     def get_uuid(self, flage=1):
         if not flage:
@@ -201,7 +247,6 @@ class CreateVm(object):
                 os.chdir(os.path.dirname(disk))
                 qemu_img = get_cmd("qemu-img")
                 cmd = "{} create -f qcow2 -b ../template_vm/{} {}".format(qemu_img, backfile, diskname)
-                print cmd
                 try:
                     subprocess.call(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 except subprocess.CalledProcessError.message as e:
