@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+# we always start with no errors
+ERROR=0
+PASS=0
+FAILED_FUNCS=""
+TIMESTAMP_FORMAT=${TIMESTAMP_FORMAT:-"%F %H/%M/%S"}
+TOP_DIR=$(cd $(dirname "$0")/.. && pwd)
+
+[[ ! -n $LOG_DIR ]] && LOG_DIR="$TOP_DIR/log"
+[[ -d $LOG_DIR ]] && mkdir -p $LOG_DIR
+
+#function start_log {
+#}
+    
+
+## Get log file dir
+function log {
+    local res=$1
+    shift 1
+    local msg="$@"
+    local logfile="passed.log"
+    if [[ $res -ne 0 ]] ; then
+        logfile="failed.log"
+    fi 
+    logfile=$LOG_DIR/$logfile 
+    echo -n $(date +"${TIMESTAMP_FORMAT}") "[SCRIPT: $0 PID: $$] -- " >> $logfile
+    echo $msg 2>&1 | tee -ai $logfile
+}
+
+function passed {
+    local lineno=$(caller 0 | awk '{print $1}')
+    local function=$(caller 0 | awk '{print $2}')
+    local msg="$1"
+    if [ -z "$msg" ]; then
+        msg="OK"
+    fi  
+    PASS=$((PASS+1))
+    log 0 $function:L $lineno $msg
+}
+
+function failed {
+    local lineno=$(caller 0 | awk '{print $1}')
+    local function=$(caller 0 | awk '{print $2}')
+    local msg="$1"
+    FAILED_FUNCS+="$function:L$lineno\n"
+    log 1 "ERROR: $function:L$lineno!" "   $msg"
+    ERROR=$((ERROR+1))
+}
+
+function assert_equal {
+    local lineno=`caller 0 | awk '{print $1}'`
+    local function=`caller 0 | awk '{print $2}'`
+    local msg=$3
+    if [[ "$1" != "$2" ]]; then
+        FAILED_FUNCS+="$function:L$lineno\n"
+        echo "ERROR: $1 != $2 in $function:L$lineno!"
+        echo "  $msg"
+        ERROR=$((ERROR+1))
+    else
+        PASS=$((PASS+1))
+        echo "$function:L$lineno - ok"
+    fi
+}
+
+function report_results {
+    log 0 "$PASS Tests PASSED"
+    if [[ $ERROR -gt 1 ]]; then
+        log 1
+        log 1 "The following $ERROR tests FAILED"
+        log 1 "$FAILED_FUNCS"
+        log 1  "---"
+        exit 1
+    fi
+}
+
