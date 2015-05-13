@@ -1,6 +1,8 @@
-#!/usr/bin/env python #coding: utf-8
+#!/usr/bin/env python 
+#coding: utf-8
 #author leidong
 
+from  gettext import gettext as _
 import libvirt
 from libvirt import libvirtError
 
@@ -18,7 +20,7 @@ import subprocess
 
 def create_disk(diskpath=None):
     if diskpath is None:
-        print "disk path is None"
+        print _("disk path is None")
     
 ## find cmd from path env 
 def get_cmd(cmd=None):
@@ -26,14 +28,16 @@ def get_cmd(cmd=None):
         return(0)
     ret = find_executable(cmd)
     if ret is None:
-        raise CreateError("Not Found command %s" % cmd)
+        raise CreateError(_("Not Found command %s" % cmd))
     return ret
     
 
 
 class CreateError(Exception):
     def __init__(self, msg):
-         Exception.__init__(self, msg)
+        self.msg = _(msg)
+        Exception.__init__(self, self.msg)
+
 
 class CreateVm(object):
     
