@@ -7,10 +7,13 @@
 
 from vm import CreateVm
 from xml import KvmXml
+from common import cfg
 
-def main(name="test", uri=None):
-    cv = CreateVm(name, uri)
-    kx = KvmXml(name)
+CONF = cfg.CONF
+
+def main():
+    cv = CreateVm(CONF.name, CONF.uri, CONF.ostype)
+    kx = KvmXml(CONF.name)
     kx.create_xml
     cv.new_vm(kx)
 

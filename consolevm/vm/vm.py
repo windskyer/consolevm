@@ -41,18 +41,19 @@ class CreateError(Exception):
 
 class CreateVm(object):
     
-    def __init__(self,vmname="test", uri=None):
-        if uri is None:
-            uri = "qemu:///system"
+    def __init__(self,vmname="test", url=None, ostype=None):
+        if url is None:
+            url = "qemu:///system"
         if vmname is None:
             vmname = "test"
 
-        self.uri = uri
+        self.url = url
         self.xmlfile = None
         self.xmlstring = None
         self.diskpath = None
         self.shortname = vmname
         self.uuid = None
+        self.ostype = ostype 
 
         ##conn libvirtd
         self._open
@@ -82,9 +83,9 @@ class CreateVm(object):
     @property
     def _open(self):
         try:
-            self.virConn = libvirt.open(self.uri)
+            self.virConn = libvirt.open(self.url)
         except libvirtError , e:
-            raise CreateError(" not conn %s  %s" % (self.uri, e.err))
+            raise CreateError(" not conn %s  %s" % (self.url, e.err))
 
     @property
     def _undefine(self):
@@ -146,7 +147,6 @@ class CreateVm(object):
     def delete(self):
         self._delete
         for disk_dir in self.disk_dirs:
-            print disk_dir
             if os.path.isdir(disk_dir):
                 shutil.rmtree(disk_dir, True)
                 
@@ -159,12 +159,11 @@ class CreateVm(object):
     @property
     def is_active(self):
         self._virDomain
-        return self.virtDomain.is_Active()
+        return  self.virtDomain.isActive()
 
     @property
     def _runsaveimg(self):
         if not self.virtDomain.isActive():
-            print "leidong"
             self.virConn.saveImageDefineXML(self.savefile, self.get_xmlstring, libvirt.VIR_DOMAIN_SAVE_RUNNING)
             self._run
         else:
@@ -202,8 +201,10 @@ class CreateVm(object):
         self._save
 
     def is_save(self, savedir):
-        if savedir is None or not os.path.exists(savedir):
+        if savedir is None :
             raise CreateError(" not found  %s dir" % savedir)
+        if not os.path.exists(savedir):
+            return False
 
         self.savefile = os.path.join(savedir ,  self.fullname + ".save")
 
@@ -246,7 +247,10 @@ class CreateVm(object):
             if not os.path.exists(disk):
                 diskname = os.path.basename(disk)
                 if backfile is None:
-                    backfile = "centos6.6.flftuu.com.raw"
+                    if self.ostype == "windows" or self.ostype == "w":
+                        backfile = "wind.flftuu.com.raw"
+                    else:
+                        backfile = "centos6.6.flftuu.com.raw"
 
                 os.chdir(os.path.dirname(disk))
                 qemu_img = get_cmd("qemu-img")

@@ -16,10 +16,19 @@ topdir = os.path.normpath(os.path.join(os.path.abspath(sys.argv[0]),
 if os.path.exists(os.path.join(topdir, "consolevm", "__init__.py")):
         sys.path.insert(0, topdir)
 
+import consolevm
+from consolevm.common import cfg
+CONF = cfg.CONF
 
-from consolevm.create_vm import main
+prog="consolevm"
+usage="create or console vm"
+description=consolevm.__description__
+version=consolevm.__version__
+CONF(prog, usage, description, version)
 
 if __name__ == "__main__":
-    sys.exit(main())
+    #from consolevm.create_vm import main
+    from consolevm.console_vm import main
+    sys.exit(main('create'))
 
 

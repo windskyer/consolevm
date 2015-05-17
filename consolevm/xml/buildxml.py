@@ -72,9 +72,12 @@ class KvmXml(object):
         #fullname_ex = " ".join(socket.gethostbyname_ex(fullname))
         fullname = [self.name]
         pattern = re.compile("(\w*)\.(\w*)\.(\w*)")
-        res = pattern.search(socket.gethostname()).groups()
-        domain = ".".join(res[1:]).split('.')
-        fullname.extend(domain)
+        try:
+            res = pattern.search(socket.gethostname()).groups()
+            domain = ".".join(res[1:]).split('.')
+            fullname.extend(domain)
+        except AttributeError:
+            fullname.extend(["flftuu", "com"])
         return str(".".join(fullname))
 
     def _random_mac(self, vmtype='qemu'):
