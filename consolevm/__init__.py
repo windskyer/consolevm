@@ -6,6 +6,7 @@ __version__ = "2015.5.1"
 __description__ = ""
 
 from common import cfg
+from common import utils
 
 CONF = cfg.CONF
 reg_opts = [
@@ -16,7 +17,8 @@ reg_opts = [
 
     cfg.Opt('name',
             short='n',
-            default='test',
+            default=utils.env('CINDERCLIENT_DEBUG',dfault=False),
+
             nargs='+',
             help='qemu vm name + eg -n test1 test2'),
 

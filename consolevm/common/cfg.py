@@ -228,7 +228,13 @@ class _ConfigOpt(object):
     def __call__(self, prog, usage, description, version):
         self.project = prog
         self.version = version
-        self._oparser = argparse.ArgumentParser(prog=prog, usage=usage, description=description)
+        self._oparser = argparse.ArgumentParser(prog=prog, 
+                                                usage=usage, 
+                                                description=description, 
+                                                add_help=False,
+                                                epilog='See "consolevm help COMMAND" '
+                                                       'for help on a specific command.',
+                                               )
 
 
         self._setup_()
@@ -261,23 +267,27 @@ class _ConfigOpt(object):
 
     @property
     def _register_config(self):
+
+        self._oparser.add_argument('-h', '--help',
+                                   acton='store_true',
+                                   help=argparse.SUPPRESS)
+
         self._oparser.add_argument('-v', '--version',
                                    action='version',
                                    version=self.version,
-                                   help='Print more verbose output (set logging level to '
-                                   'INFO instead of default WARNING level).')
+                                  )
 
         self._oparser.add_argument('-d', '--debug',
                                    action='store_false',
                                    default=False,
-                                   help='Print debugging output (set logging level to '
-                                        'DEBUG instead of default WARNING level).'),
+                                   help="Print debugging output")
+
         self._oparser.add_argument('--config-file',
                                    nargs='?',
                                    help='Path to a config file to use. Multiple config '
                                    'files can be specified, with values in later '
                                    'files taking precedence. The default files '
-                                    )
+                                  )
             
     @property
     def _add_argument(self):
@@ -370,6 +380,14 @@ class ConfigOpts(object):
         """
         for opt in opts:
             self.register_opt(opt)
+
+    ## register subcommond opts
+    def sub_commond_register_opt(self, opt, subname):
+        pass
+
+    def sub_commond_register_opts(self, opts, subname):
+        pass
+            
 
 CONF = ConfigOpts() 
 

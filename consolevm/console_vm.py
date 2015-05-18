@@ -12,13 +12,18 @@ from common import cfg
 ## get config opts
 CONF  = cfg.CONF
 
-## create vm 
+class ConsoleVm(object):
+    def __init__(self, vmname):
+        self.cv = CreateVm(vmname, CONF.url, CONF.ostype)
+        self.vmname = vmname
 
-def create_vm(vmname=None):
-    cv = CreateVm(vmname, CONF.url, CONF.ostype)
-    kx = KvmXml(vmname)
-    kx.create_xml
-    cv.new_vm(kx)
+    def _kx_(self):
+       self.kx = KvmXml(self.vmname)
+
+    ## create vm 
+    def create_vm(self):
+        self.kx.create_xml
+        self.cv.new_vm(self.kx)
 
 ## delete vm
 def delete_vm(vmname=None):
