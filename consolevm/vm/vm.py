@@ -90,7 +90,8 @@ class CreateVm(object):
     @property
     def _undefine(self):
         self._virDomain
-        self._stop
+        if self.is_active:
+            self._stop
         self.virtDomain.undefineFlags()
 
 
