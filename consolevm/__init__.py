@@ -82,6 +82,6 @@ sub_reg_comm = {
 #CONF.sub_commond_register_opts(sub_reg_opts, sub_reg_comm.get('list'))
 for k in sub_reg_comm.keys():
     if k == 'list':
-        CONF.sub_commond_register_opts(sub_reg_opts, sub_reg_comm.get(k))
+        CONF.sub_commond_register_opts(sub_reg_opts[1:], sub_reg_comm.get(k))
     else:
         CONF.sub_commond_register_opts(sub_reg_opts[:1], sub_reg_comm.get(k))
