@@ -18,14 +18,13 @@ from consolevm.common import cfg
 CONF = cfg.CONF
 
 prog="consolevm"
-usage="create or console vm"
-description=consolevm.__description__
+description=consolevm.__doc__.strip()
 version=consolevm.__version__
-CONF(prog, usage, description, version)
+CONF(prog,description, version)
 
 if __name__ == "__main__":
     #from consolevm.create_vm import main
     from consolevm.console_vm import main
-    sys.exit(main('delete'))
+    sys.exit(main())
 
 

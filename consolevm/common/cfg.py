@@ -15,6 +15,7 @@ from ConfigParser import ConfigParser
 from ConfigParser import re
 
 import collections
+from consolevm.actions import actions_module
 
 def _fixpath(p):
     """Apply tilde expansion and absolutization to a path."""
@@ -130,6 +131,28 @@ class ConfParser(ConfigParser):
         self._opts = opts
         self.args_sections = secs
 
+class ArgumentParser(argparse.ArgumentParser):
+
+    def __init__(self, *args, **kwargs):
+        super(ArgumentParser, self).__init__(*args, **kwargs)
+
+    def error(self, message):
+        """error(message: string)
+
+        Prints a usage message incorporating the message to stderr and
+        exits.
+        """
+        self.print_usage(sys.stderr)
+        #FIXME(lzyeval): if changes occur in argparse.ArgParser._check_value
+        choose_from = ' (choose from'
+        progparts = self.prog.partition(' ')
+        self.exit(2, "error: %(errmsg)s\nTry '%(mainp)s help %(subp)s'"
+                     " for more information.\n" %
+                     {'errmsg': message.split(choose_from)[0],
+                      'mainp': progparts[0],
+                      'subp': progparts[2]})
+
+
 class OptGroup(object):
     """
       name:
@@ -200,11 +223,33 @@ class _ConfigOpt(object):
         self._argparse_group = None
         self._namespace = namespace
         self._reg_opts = []
+        self._sub_reg_opts = []
+        self._sub_reg_coms = []
+        self._sub_commonds = {}
+        self.subcommands = {}
+
 
     def _setup_(self):
         self._register_config
         self._add_argument
+
+        self._oparser.parse_known_args(namespace=self._namespace)
+
+        self.subparsers = self._oparser.add_subparsers( 
+                                                       metavar='<subcommand>')
+
+        self._reg_help
+
+        self._sub_add_argument
+        if self._namespace.help or not sys.argv[1:]:
+            self._oparser.print_help()
+            sys.exit(0)
+
         self._oparser.parse_args(namespace=self._namespace)
+        if self._namespace.func == self.vm_help:
+            self.vm_help(self._namespace)
+            sys.exit(0)
+
         if self._namespace.config_file is not None:
             self._pre_setup_(self._namespace.config_file, self.project)
         else:
@@ -225,18 +270,15 @@ class _ConfigOpt(object):
                     self.filenames = find_config_files(project)  
         return file_ok
 
-    def __call__(self, prog, usage, description, version):
+    def __call__(self, prog,description, version):
         self.project = prog
         self.version = version
-        self._oparser = argparse.ArgumentParser(prog=prog, 
-                                                usage=usage, 
-                                                description=description, 
-                                                add_help=False,
-                                                epilog='See "consolevm help COMMAND" '
-                                                       'for help on a specific command.',
-                                               )
-
-
+        self._oparser = ArgumentParser(prog=prog, 
+                                       description=description, 
+                                       add_help=False,
+                                       epilog='See "consolevm help subcommand" '
+                                       'for help on a specific command.',
+                                      )
         self._setup_()
         self.confparser = ConfParser()
         self.confparser(self.filenames)
@@ -269,7 +311,7 @@ class _ConfigOpt(object):
     def _register_config(self):
 
         self._oparser.add_argument('-h', '--help',
-                                   acton='store_true',
+                                   action='store_true',
                                    help=argparse.SUPPRESS)
 
         self._oparser.add_argument('-v', '--version',
@@ -278,17 +320,39 @@ class _ConfigOpt(object):
                                   )
 
         self._oparser.add_argument('-d', '--debug',
-                                   action='store_false',
-                                   default=False,
+                                   action='store_true',
                                    help="Print debugging output")
 
         self._oparser.add_argument('--config-file',
                                    nargs='?',
                                    help='Path to a config file to use. Multiple config '
                                    'files can be specified, with values in later '
-                                   'files taking precedence. The default files '
+                                   'files taking precedence. The default files ',
                                   )
-            
+        self._oparser.add_argument('--config_file',
+                                   help=argparse.SUPPRESS,
+                                  )
+        
+    @property
+    def _reg_help(self):
+
+        subparser = self.subparsers.add_parser('help', 
+                                               add_help=False, 
+                                               help='Shows help about this program or one of its subcommonds',
+                                              )
+        subparser.add_argument('command',
+                               nargs='?',
+                               metavar='<subcommand>',
+                               help='Display help for <subcommand>',
+                              )
+
+        subparser.add_argument('-h', '--help',
+                               action='help',
+                               help=argparse.SUPPRESS,)
+
+        subparser.set_defaults(func=self.vm_help)
+        self.subcommands['help'] = subparser
+        
     @property
     def _add_argument(self):
         for ret_opt in self._reg_opts:
@@ -296,8 +360,52 @@ class _ConfigOpt(object):
             kwargs = ret_opt[1]
             self._oparser.add_argument(*args, **kwargs)
 
+    @property
+    def _sub_add_argument(self):
+        for k, v in self._sub_commonds.items():
+            command = k.replace('_', '-')
+            attr = '_'.join(['vm', k])
+            desc = v.get('desc') 
+            values = v.get('values') 
+            subparser = self.subparsers.add_parser(command, add_help=False, **desc)
+
+            for args, kwargs in values:
+                subparser.add_argument(*args, **kwargs)
+
+            subparser.add_argument('-h', '--help',
+                                   action='help',
+                                   help=argparse.SUPPRESS,)
+
+            callback = getattr(actions_module, attr)
+            subparser.set_defaults(func=callback)
+            self.subcommands[command] = subparser
+
     def register_opt(self, opt):
         self._reg_opts.append(opt._add_to_argparse())
+
+    def sub_commond_register_opt(self, opt, subname):
+        #self._sub_reg_opts.append({subname.name : opt._add_to_argparse()})
+
+        self._sub_reg_opts.append(opt._add_to_argparse())
+
+        values = {'values' : self._sub_reg_opts}
+        desc = {'desc' : subname._add_to_sub_commond().get(subname.name)}
+        values.update(desc)
+        #self._sub_reg_coms.append(subname._add_to_sub_commond())
+        self._sub_commonds.setdefault(subname.name, values)
+
+    def vm_help(self, args):
+        """
+        Display help about this program or one of its subcommands.
+        """
+        if args.command:
+            if args.command in self.subcommands:
+                self.subcommands[args.command].print_help()
+            else:
+                raise Exception("'%s' is not a valid subcommand" %
+                                       args.command)
+        else:
+            self._oparser.print_help()
 
 
     class GroupAttr(collections.Mapping):
@@ -331,32 +439,61 @@ class _ConfigOpt(object):
             """Return the number of options and option groups."""
             return len(self._group._opts)
 
+
 class Opt(object):
 
-    def __init__(self, name , short=None , prefix='', **kwargs):
+    def __init__(self, name , short=None , prefix='', subcom=False, **kwargs):
         self.name = name
         self.short = short
         self.prefix=prefix
+        self.subcom = subcom
         self.kwargs = kwargs
 
     def _add_to_argparse(self, positional=False):
         def hyphen(arg):
             return arg if not positional else ''
 
-        args = [hyphen('--') + self.prefix + self.name]
-        if self.short:
-            args.append(hyphen('-') + self.short)
+        if self.subcom:
+            args = []
+            args.append(self.name) 
+
+        else:
+            args = [hyphen('--') + self.prefix + self.name]
+            if self.short:
+                args.append(hyphen('-') + self.short)
 
         args.reverse()
         return (args, self.kwargs)
+
+    def __repr__(self):
+        return "'%s' is Opt object instance" % self.name
+
+    def __str__(self):
+        return "'%s' is Opt object instance" % self.name
+
+class Sub(object):
+    def __init__(self, name, **kwargs):
+        self.name = name
+        self.kwargs = kwargs
         
+    def _add_to_sub_commond(self, positional=False):
+        args = {}
+        args.setdefault(self.name.lower(), self.kwargs)
+        return args
+
+    def __repr__(self):
+        return "'%s' is Sub object instance" % self.name
+
+    def __str__(self):
+        return "'%s' is Sub object instance" % self.name
+
 class ConfigOpts(object):
     def __init__(self):
         self._namespace = _Namespace(self)
         self._Config = _ConfigOpt(self._namespace)
 
-    def __call__(self, prog, usage, description, version):
-        self._Config(prog, usage, description, version)
+    def __call__(self, prog,description, version):
+        self._Config(prog,description, version)
 
     def __getattr__(self, name):
         if name in self._Config.confparser._opts:
@@ -383,20 +520,25 @@ class ConfigOpts(object):
 
     ## register subcommond opts
     def sub_commond_register_opt(self, opt, subname):
-        pass
+        self._Config.sub_commond_register_opt(opt, subname)
 
     def sub_commond_register_opts(self, opts, subname):
-        pass
+        self._Config._sub_reg_opts = []
+        for opt in opts:
+            self.sub_commond_register_opt(opt, subname)
             
+    def print_help(self):
+        self._namespace.print_help()
 
 CONF = ConfigOpts() 
 
 if __name__ == '__main__':
     #CONF  = ConfigOpts() 
     prog="consolevm"
-    usage=prog
-    description="<options>"
+    usage=prog + "adfafadfadfafdfadfa"
+    description="Command-line interface to the consolevm API."
     version="2015.1.20"
+
     reg_opts = [
         Opt('bind_host',
             short='b',
@@ -404,10 +546,25 @@ if __name__ == '__main__':
             nargs='+',
             help='libvirtd server IP address to listen on.'),
     ]
+    sub_reg_opts = [
+        Opt('name',
+            metavar='<name>',
+            subcom=True,
+            nargs='+',
+            help='libvirtd vm name'),
+    ]
+    sub_reg_comm = [
+        Sub('list',
+            help='list all libvirtd vm '),
+    ]
+
+
+    CONF.sub_commond_register_opts(sub_reg_opts, sub_reg_comm[0])
     CONF.register_opts(reg_opts)
-    CONF(prog, usage, description, version)
+    CONF(prog,  description, version)
     print CONF.config_file
     print CONF.bind_host
     print CONF.libvirtd.ip
     print CONF.libvirtd['ip']
     print CONF.qemu.savedir
+    CONF.func(CONF)

@@ -21,9 +21,17 @@ class ConsoleVm(object):
        self.kx = KvmXml(self.vmname)
 
     ## create vm 
-    def create_vm(self):
+    def create_vm(self,vmname):
+        self.cv = CreateVm(vmname, CONF.url, CONF.ostype)
         self.kx.create_xml
         self.cv.new_vm(self.kx)
+
+## create vm 
+def create_vm(vmname):
+    cv = CreateVm(vmname, CONF.url, CONF.ostype)
+    kx = KvmXml(vmname)
+    kx.create_xml
+    cv.new_vm(kx)
 
 ## delete vm
 def delete_vm(vmname=None):
@@ -86,7 +94,7 @@ options = {
 
 }
 
-def main(opts=None):
+def _main(opts=None):
     if opts is None: 
         opts = ["status"]
 
@@ -104,6 +112,8 @@ def main(opts=None):
         for name in names:
             opt(name)
 
+def main():
+    CONF.func(CreateVm(),CONF)
 
 if __name__ == "__main__":
     #create_vm_args("console_vm", "console vm")

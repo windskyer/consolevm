@@ -41,31 +41,34 @@ class CreateError(Exception):
 
 class CreateVm(object):
     
-    def __init__(self,vmname="test", url=None, ostype=None):
+    def __init__(self, url=None, ostype=None):
         if url is None:
             url = "qemu:///system"
-        if vmname is None:
-            vmname = "test"
 
         self.url = url
         self.xmlfile = None
         self.xmlstring = None
         self.diskpath = None
-        self.shortname = vmname
+        self.shortname = None 
         self.uuid = None
         self.ostype = ostype 
 
         ##conn libvirtd
         self._open
 
-        ## fullname
-        self.fullname = self._fullname
-        
         ## instance KvmXml 
         self.kx = None
 
         ## instance GetXml 
         self.gx = None
+
+    def __call__(self, vmname="test"):
+        if vmname is None:
+            vmname = "test"
+        self.shortname = vmname
+
+        ## fullname
+        self.fullname = self._fullname
 
     @property
     def _fullname(self):
@@ -261,6 +264,9 @@ class CreateVm(object):
                 except subprocess.CalledProcessError.message as e:
                     raise CreateError("exec {} commond is Fauilter {}".format(cmd , e))
 
+    def fullname(self, name):
+        self.shortname = name
+        return self._fullname
 
     @property
     def list_all_vm(self):
@@ -271,6 +277,18 @@ class CreateVm(object):
         self.allvm = domainlist
         return domainlist
 
+    @property
+    def list_vm(self):
+        vms = {}
+        for virt in self.virConn.listAllDomains():
+            if virt.isActive():
+                vms.setdefault(virt.name(), 1)
+                #print "%s is running" % virt.name()
+            else:
+                vms.setdefault(virt.name(),0)
+                #print "%s is shut off" % virt.name()
+        return vms
+                
     @property
     def list_all_uuid(self):
         uuidlist = []
