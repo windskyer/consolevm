@@ -314,7 +314,7 @@ class _ConfigOpt(object):
                                    action='store_true',
                                    help=argparse.SUPPRESS)
 
-        self._oparser.add_argument('-v', '--version',
+        self._oparser.add_argument('-V', '--version',
                                    action='version',
                                    version=self.version,
                                   )

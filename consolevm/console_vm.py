@@ -113,7 +113,7 @@ def _main(opts=None):
             opt(name)
 
 def main():
-    CONF.func(CreateVm(),CONF)
+    CONF.func(CreateVm(CONF.url, CONF.ostype),CONF)
 
 if __name__ == "__main__":
     #create_vm_args("console_vm", "console vm")

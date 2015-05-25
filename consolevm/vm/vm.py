@@ -321,7 +321,7 @@ class CreateVm(object):
         self.create_disk()
         self._define
         self.get_uuid()
-        self.start
+        self.start()
 
 if __name__ == "__main__":
     vmname = sys.argv[1:]

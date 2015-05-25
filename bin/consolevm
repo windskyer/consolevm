@@ -26,5 +26,3 @@ if __name__ == "__main__":
     #from consolevm.create_vm import main
     from consolevm.console_vm import main
     sys.exit(main())
-
-
