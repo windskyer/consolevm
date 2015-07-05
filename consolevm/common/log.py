@@ -24,11 +24,14 @@ from six import moves
 import json
 
 
-from consolevm.common.gettextutils import _
-from consolevm.common import local
-from consolevm.common import cfg 
+#from consolevm.common.gettextutils import _
+#from consolevm.common import local
+#from consolevm.common import cfg 
+#
 
-
+from gettextutils import _
+import local
+import cfg
 
 
 _DEFAULT_LOG_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
@@ -107,7 +110,7 @@ logging_cli_opts = [
 ]
 
 generic_log_opts = [
-    cfg.BoolOpt('use_stderr',
+    cfg.Opt('use_stderr',
                 default=True,
                 help='Log output to standard error')     
 ]

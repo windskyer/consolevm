@@ -1,2 +1,3 @@
 oslo.config
 pbr
+lxml

@@ -298,7 +298,7 @@ class CreateVm(object):
         self.allvm = uuidlist
         return uuidlist
 
-    def new_vm(self, kx):
+    def new_vm(self, kx, savedir):
         #if not isinstance(kx, KvmXml):
             #    raise CreateError("kx is not KvmXml instance")
 
@@ -321,7 +321,7 @@ class CreateVm(object):
         self.create_disk()
         self._define
         self.get_uuid()
-        self.start()
+        self.start(savedir)
 
 if __name__ == "__main__":
     vmname = sys.argv[1:]

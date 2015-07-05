@@ -99,9 +99,18 @@ class KvmXml(object):
         _disk_dir = os.path.join(self.disk_dir, self.fullname)
         if os.path.exists(_disk_dir):
             if not os.path.isdir(_disk_dir):
-                os.remove(_disk_dir)
+                try:
+                    os.remove(_disk_dir)
+                except OSError:
+                    os.system('sudo rm -fr '+ _disk_dir)
         else:
-            os.mkdir(_disk_dir)
+            try:
+                os.mkdir(_disk_dir)
+            except OSError:
+                os.system('sudo mkdir -p '+ _disk_dir)
+                uid = os.getuid()
+                gid = os.getgid()
+                os.system(('sudo chown %s.%s %s') % (uid,gid,_disk_dir))
         return _disk_dir
 
     ## set name domain
