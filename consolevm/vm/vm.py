@@ -152,7 +152,14 @@ class CreateVm(object):
         self._delete
         for disk_dir in self.disk_dirs:
             if os.path.isdir(disk_dir):
-                shutil.rmtree(disk_dir, True)
+                try:
+                    shutil.rmtree(disk_dir, False)
+                except OSError :
+                    cmd = "sudo rm -fr {} ".format(disk_dir)
+                    try:
+                        subprocess.call(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                    except subprocess.CalledProcessError.message as e:
+                        raise CreateError("exec {} commond is Fauilter {}".format(cmd , e))
                 
     @property
     def get_xmlstring(self):
@@ -174,7 +181,8 @@ class CreateVm(object):
             self._stop
             self.virConn.saveImageDefineXML(self.savefile, self.get_xmlstring, libvirt.VIR_DOMAIN_SAVE_RUNNING)
 
-    def start(self, savedir):
+    def start(self, conf):
+        savedir = conf.qemu.savedir
         self._virDomain
         self.is_save = self.is_save(savedir)
         if self.is_save:
@@ -243,7 +251,10 @@ class CreateVm(object):
         return disks
 
     ## Create vm disk qcow2
-    def create_disk(self, backfile=None):
+    def create_disk(self, conf):
+        backfile = conf.backfile
+        templatedir = conf.templatedir
+
         for disk in self.disks:
             if os.path.exists(disk) and not os.path.isfile(disk):
                 shutil.rmtree(disk, True)
@@ -256,9 +267,12 @@ class CreateVm(object):
                     else:
                         backfile = "centos6.6.flftuu.com.raw"
 
+                if templatedir is None:
+                    templatedir = 'template_vm'
+
                 os.chdir(os.path.dirname(disk))
                 qemu_img = get_cmd("qemu-img")
-                cmd = "{} create -f qcow2 -b ../template_vm/{} {}".format(qemu_img, backfile, diskname)
+                cmd = "{} create -f qcow2 -b ../{}/{} {}".format(qemu_img, templatedir, backfile, diskname)
                 try:
                     subprocess.call(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 except subprocess.CalledProcessError.message as e:
@@ -298,7 +312,7 @@ class CreateVm(object):
         self.allvm = uuidlist
         return uuidlist
 
-    def new_vm(self, kx, savedir):
+    def new_vm(self, kx, conf):
         #if not isinstance(kx, KvmXml):
             #    raise CreateError("kx is not KvmXml instance")
 
@@ -318,10 +332,10 @@ class CreateVm(object):
 
         ## define new vm xml file
         self.disks = self.kx.disks
-        self.create_disk()
+        self.create_disk(conf)
         self._define
         self.get_uuid()
-        self.start(savedir)
+        self.start(conf)
 
 if __name__ == "__main__":
     vmname = sys.argv[1:]

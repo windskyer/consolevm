@@ -13,7 +13,7 @@ class actions_module(object):
             cv(name)
             kx = KvmXml(name)
             kx.create_xml
-            cv.new_vm(kx,args.qemu.savedir)
+            cv.new_vm(kx,args)
 
     @staticmethod
     def vm_delete(cv, args):
@@ -39,7 +39,7 @@ class actions_module(object):
     def vm_start(cv, args):
         for name in args.name:
             cv(name)
-            cv.start(args.qemu.savedir)
+            cv.start(args)
 
     @staticmethod
     def vm_status(cv, args):

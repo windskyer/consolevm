@@ -25,6 +25,17 @@ reg_opts = [
             default='linux',
             nargs='?',
             help='create qemu vm type eg -o linux or -o windows'),
+
+    cfg.Opt('backfile',
+            short='b',
+            default='cloud.flftuu.com.img',
+            nargs='?',
+            help='create qemu vm template img'),
+    
+    cfg.Opt('templatedir',
+            default='template_vm',
+            nargs='?',
+            help='create qemu vm img template dir'),
 ]
 ## register opts
 CONF.register_opts(reg_opts)
